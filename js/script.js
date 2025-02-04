@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     let seleccionados = [];
     let palabrasCorrectas = [];
+    let puntos = 0;
 
     fetch("./php/obtener_palabras.php")
         .then(response => response.json())
@@ -52,6 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function seleccionarLetra(event) {
         let celda = event.target;
+        let fila = parseInt(celda.dataset.fila);
+        let columna = parseInt(celda.dataset.columna);
 
         //Verificar si la celda ya está seleccionada
         if (celda.classList.contains("seleccionada")) {
@@ -70,17 +73,37 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function verificarPalabra() {
+        if (seleccionados.length < 2) return;
+        
         let palabraFormada = seleccionados.map(celda => celda.letra).join("");
+        let esValida = palabrasCorrectas.includes(palabraFormada);
 
-        if (palabrasCorrectas.includes(palabraFormada)) {
+        if (esValida && esEnLineaRecta()) {
             alert(`¡Encontraste la palabra: ${palabraFormada}`);
 
             seleccionados.forEach(celda => {
                 document.querySelector(`.cell[data-fila='${celda.fila}'][data-columna='${celda.columna}']`).classList.add("found");
             });
 
+            puntos += palabraFormada.length;
+            document.getElementById("puntos").textContent = `Puntos: ${puntos}`;
             seleccionados = [];
         }
+    }
+
+    function esEnLineaRecta() {
+        if (seleccionados.length < 2) return false;
+
+        let filas = seleccionados.map(celda => celda.fila);
+        let columnas = seleccionados.map(celda => celda.columna);
+
+        let mismaFila = filas.every((val, _, arr) => val === arr[0]);
+        let mismaColumna = columnas.every((val, _, arr) => val === arr[0]);
+
+        let diagonal = filas.every((val, i) => val - filas[0] === columnas[i] - columnas[0]) ||
+                       filas.every((val, i) => val - filas[0] === columnas[0] - columnas[i]);
+
+        return mismaFila || mismaColumna || diagonal;
     }
 
     function colocarPalabraEnSopa(sopa, palabra) {
@@ -127,6 +150,11 @@ document.addEventListener("DOMContentLoaded", function () {
             li.textContent = palabra.toUpperCase();
             LISTA.appendChild(li);
         });
+
+        const contadorPuntos = document.createElement("h3");
+        contadorPuntos.id = "puntos";
+        contadorPuntos.textContent = "Puntos: 0";
+        document.body.appendChild(contadorPuntos);
     }
 
 
